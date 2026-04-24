@@ -1,0 +1,33 @@
+# venvs
+.venv/
+.obsvenv/
+venv/
+env/
+
+# bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# distribuição
+build/
+dist/
+*.egg-info/
+
+# testes e coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# SO
+.DS_Store
+Thumbs.db
+
+# docker
+*.log

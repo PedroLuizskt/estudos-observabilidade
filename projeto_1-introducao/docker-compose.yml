@@ -1,0 +1,42 @@
+# docker-compose da aula 1.
+# Arquitetura: cliente -> nginx -> spam -> eggs
+#
+# eggs NÃO expõe porta para o host na arquitetura "pura" da live,
+# mas deixamos a 8001 mapeada para facilitar o debug direto
+# (ex.: curl localhost:8001/docs). Em produção você tiraria.
+
+services:
+  eggs:
+    build: ./eggs
+    container_name: eggs
+    environment:
+      SERVICE_NAME: eggs
+    ports:
+      - "8001:8000"   # debug only — acessar Swagger direto
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  spam:
+    build: ./spam
+    container_name: spam
+    environment:
+      SERVICE_NAME: spam
+      EGGS_URL: http://eggs:8000
+    depends_on:
+      eggs:
+        condition: service_healthy
+    ports:
+      - "8000:8000"   # debug only — acessar Swagger direto
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - spam

@@ -1,0 +1,7 @@
+# Dependências para rodar spam + eggs localmente na sua .obsvenv,
+# sem Docker. Cada serviço também tem seu próprio requirements.txt
+# dentro da pasta (esses são os usados pelo Dockerfile).
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+httpx==0.28.1
