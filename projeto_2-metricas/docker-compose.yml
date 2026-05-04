@@ -1,0 +1,84 @@
+# docker-compose da aula 2.
+#
+# Arquitetura:
+#
+#   cliente -> nginx -> spam -> eggs
+#                ^         \      ^
+#                |          \     |
+#                |           v    |
+#                +---------> lgtm <---+
+#                       (OTLP gRPC :4317)
+#
+# O LGTM (Loki + Grafana + Tempo + Mimir/Prometheus) é uma imagem all-in-one
+# da Grafana Labs que sobe o Collector + Prometheus + Tempo + Loki + Grafana
+# em um único container. Ideal para estudo: zero configuração, abre o
+# Grafana e os dados já estão lá.
+
+services:
+  eggs:
+    build: ./eggs
+    container_name: eggs
+    environment:
+      SERVICE_NAME: eggs
+      # ----- Variáveis lidas pelo opentelemetry-instrument (auto-instrum) -----
+      OTEL_SERVICE_NAME: eggs
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=eggs,service.version=0.2.0"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://lgtm:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      # Métricas a cada 5s para sentir os updates rápido na demo.
+      OTEL_METRIC_EXPORT_INTERVAL: "5000"
+      # Desliga traces e logs nesta aula — vamos tratar nas aulas 3 e 4.
+      OTEL_TRACES_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_METRICS_EXPORTER: otlp
+    ports:
+      - "8001:8000"
+    depends_on:
+      lgtm:
+        condition: service_healthy
+
+  spam:
+    build: ./spam
+    container_name: spam
+    environment:
+      SERVICE_NAME: spam
+      EGGS_URL: http://eggs:8000
+      # No spam o setup é manual (telemetria.py), mas ainda lemos a
+      # variável de endpoint para manter a config externalizada.
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://lgtm:4317"
+      OTEL_METRIC_EXPORT_INTERVAL: "5000"
+    depends_on:
+      eggs:
+        condition: service_started
+      lgtm:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - spam
+
+  lgtm:
+    # Imagem all-in-one da Grafana com OTel Collector, Prometheus, Tempo,
+    # Loki e Grafana já configurados e amarrados entre si.
+    image: grafana/otel-lgtm:latest
+    container_name: lgtm
+    ports:
+      - "3000:3000"   # Grafana UI
+      - "4317:4317"   # OTLP gRPC (apps -> Collector)
+      - "4318:4318"   # OTLP HTTP (apps -> Collector, alternativa)
+    healthcheck:
+      # O Grafana tem um endpoint de health bem rápido — é o que mais
+      # demora a subir dentro do container, então é o melhor sinal de
+      # "tudo pronto".
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30

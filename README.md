@@ -15,7 +15,7 @@ Observabilidade é uma dessas áreas em que o vocabulário importa tanto quanto 
 | # | Tema | Pasta | Status |
 |---|------|-------|--------|
 | 1 | Introdução à observabilidade (teoria + aplicação base) | [`projeto_1-introducao/`](./projeto_1-introducao/) | ✅ concluída |
-| 2 | Métricas com OpenTelemetry e Prometheus | `projeto_2-metricas/` | 🔜 em breve |
+| 2 | Métricas com OpenTelemetry e Prometheus (LGTM) | [`projeto_2-metricas/`](./projeto_2-metricas/) | ✅ concluída |
 | 3 | Tracing com OpenTelemetry, Tempo e Jaeger | `projeto_3-tracing/` | 🔜 em breve |
 | 4 | Logs com OpenTelemetry e Loki | `projeto_4-logs/` | 🔜 em breve |
 | 5 | Logfire como alternativa gerenciada | `projeto_5-logfire/` | 🔜 em breve |
@@ -33,17 +33,14 @@ flowchart LR
     S -->|HTTP| E[eggs<br/>FastAPI + Uvicorn]
 ```
 
-A partir da aula 2, esse diagrama ganha um **Collector do OpenTelemetry** recebendo telemetria dos serviços, e os backends de armazenamento aparecem ao lado:
+A partir da aula 2, o cenário ganha um backend de observabilidade (`grafana/otel-lgtm` — Collector + Prometheus + Tempo + Loki + Grafana em um único container) recebendo telemetria via OTLP:
 
 ```mermaid
 flowchart LR
     Client([🌐]) --> N[Nginx] --> S[spam] -->|HTTP| E[eggs]
-    S -.->|OTLP| C[OTel Collector]
-    E -.->|OTLP| C
-    C --> P[(Prometheus<br/>métricas)]
-    C --> T[(Tempo<br/>traces)]
-    C --> L[(Loki<br/>logs)]
-    P & T & L --> G{{Grafana}}
+    S -.->|OTLP| L[("LGTM<br/>collector + backends")]
+    E -.->|OTLP| L
+    L --> G{{Grafana}}
 ```
 
 ## Stack técnica
@@ -55,12 +52,12 @@ flowchart LR
 - **Validação:** Pydantic v2
 - **Reverse proxy:** Nginx
 - **Containerização:** Docker + docker-compose
-- **Observabilidade:** OpenTelemetry, Prometheus, Tempo, Loki, Grafana, Logfire
+- **Observabilidade:** OpenTelemetry, Prometheus (Mimir), Tempo, Loki, Grafana, Logfire
 
 ## Pré-requisitos
 
 - [Python 3.12+](https://www.python.org/)
-- [Docker](https://docs.docker.com/get-docker/) com docker-compose (opcional, mas recomendado a partir da aula 2)
+- [Docker](https://docs.docker.com/get-docker/) com docker-compose (recomendado a partir da aula 2)
 - Opcional: [Git](https://git-scm.com/) para acompanhar os diffs entre aulas
 
 ## Como navegar
@@ -68,13 +65,14 @@ flowchart LR
 Cada aula funciona de forma **autônoma**. Entre na pasta da aula que te interessa, leia o README local, e siga as instruções. Se quiser o caminho mais didático:
 
 1. Comece pela [aula 1](./projeto_1-introducao/) — apostila conceitual + aplicação base sem instrumentação.
-2. Avance aula por aula observando o que foi adicionado em cada uma.
+2. [Aula 2](./projeto_2-metricas/) — adiciona métricas (manual no spam, automática no eggs) e o backend LGTM.
+3. Avance aula por aula observando o que foi adicionado em cada uma.
 
 ## Créditos
 
 Conteúdo inspirado em:
 
-- Série **"Observabilidade"** do Eduardo Mendes ([@dunossauro](https://github.com/dunossauro)) — [Live de Python #261](https://www.youtube.com/watch?v=9mifCIFhtIQ) e seguintes.
+- Série **"Observabilidade"** do Eduardo Mendes ([@dunossauro](https://github.com/dunossauro)) — [Live de Python #261](https://www.youtube.com/watch?v=9mifCIFhtIQ), [#263](https://www.youtube.com/watch?v=GvF8hlqaR-c) e seguintes.
 - Repositório-referência do Dunossauro: [live-de-python/codigo](https://github.com/dunossauro/live-de-python/tree/main/codigo).
 - Livro **Observability Engineering** (Majors, Fong-Jones, Miranda — O'Reilly).
 - Projeto **OpenTelemetry** e sua documentação: <https://opentelemetry.io/>.

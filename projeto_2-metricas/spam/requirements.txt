@@ -1,0 +1,11 @@
+# --- aplicação ---
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+httpx==0.28.1
+
+# --- OpenTelemetry: instrumentação manual ---
+# api + sdk são o núcleo. O exporter-otlp-proto-grpc fala com o LGTM/Collector.
+opentelemetry-api==1.29.0
+opentelemetry-sdk==1.29.0
+opentelemetry-exporter-otlp-proto-grpc==1.29.0

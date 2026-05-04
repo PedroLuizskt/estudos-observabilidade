@@ -1,0 +1,18 @@
+# --- aplicação ---
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+
+# --- OpenTelemetry: instrumentação automática ---
+# `opentelemetry-distro` traz o launcher `opentelemetry-instrument` e o
+# `opentelemetry-bootstrap` que detecta libs instaladas e adiciona as
+# instrumentations correspondentes.
+opentelemetry-distro==0.50b0
+opentelemetry-exporter-otlp==1.29.0
+
+# Instrumentations específicas do que o eggs usa.
+# (O bootstrap descobriria sozinho, mas declarar explícito facilita
+# build reproduzível e leitura por revisores.)
+opentelemetry-instrumentation-fastapi==0.50b0
+opentelemetry-instrumentation-asgi==0.50b0
+opentelemetry-instrumentation-system-metrics==0.50b0

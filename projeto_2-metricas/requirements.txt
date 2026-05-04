@@ -1,0 +1,21 @@
+# Dependências para rodar tudo localmente na sua .obsvenv (sem Docker).
+# Cada serviço também tem seu próprio requirements.txt isolado dentro
+# da pasta — esses são os usados pelos Dockerfiles.
+
+# --- aplicação ---
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+httpx==0.28.1
+
+# --- OpenTelemetry: SDK + exporter OTLP gRPC (instrumentação manual no spam) ---
+opentelemetry-api==1.29.0
+opentelemetry-sdk==1.29.0
+opentelemetry-exporter-otlp-proto-grpc==1.29.0
+
+# --- OpenTelemetry: distro + auto-instrumentação (usadas pelo eggs) ---
+opentelemetry-distro==0.50b0
+opentelemetry-exporter-otlp==1.29.0
+opentelemetry-instrumentation-fastapi==0.50b0
+opentelemetry-instrumentation-asgi==0.50b0
+opentelemetry-instrumentation-system-metrics==0.50b0
