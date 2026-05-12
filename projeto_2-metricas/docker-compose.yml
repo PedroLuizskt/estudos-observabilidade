@@ -75,10 +75,12 @@ services:
       - "4317:4317"   # OTLP gRPC (apps -> Collector)
       - "4318:4318"   # OTLP HTTP (apps -> Collector, alternativa)
     healthcheck:
-      # O Grafana tem um endpoint de health bem rápido — é o que mais
-      # demora a subir dentro do container, então é o melhor sinal de
-      # "tudo pronto".
-      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:3000/api/health"]
+      # O LGTM cria /tmp/ready quando todos os componentes internos
+      # (Collector, Prometheus, Tempo, Loki, Grafana) estão prontos.
+      # Esse é o teste mais confiável e não depende de wget/curl,
+      # que não estão instalados na imagem.
+      test: ["CMD", "test", "-f", "/tmp/ready"]
       interval: 5s
       timeout: 3s
       retries: 30
+      start_period: 30s
