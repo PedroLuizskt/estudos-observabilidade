@@ -1,0 +1,88 @@
+# docker-compose da aula 3.
+#
+# Mesma topologia da aula 2; o que muda é a configuração de
+# OpenTelemetry. As 3 mudanças-chave em relação à aula 2:
+#
+#   1. eggs:  OTEL_TRACES_EXPORTER mudou de 'none' para 'otlp'
+#   2. spam:  OTEL_TRACES_EXPORTER é definido aqui (mesmo que a
+#             config de traces no spam seja manual via tracing.py,
+#             algumas auto-instrumentations leem essa variável)
+#   3. spam:  OTEL_BSP_SCHEDULE_DELAY menor (1s) para os spans
+#             aparecerem rápido no Tempo durante a demo
+#
+# Arquitetura (idêntica à aula 2):
+#
+#   cliente -> nginx -> spam -> eggs
+#                ^         \      ^
+#                |          \     |
+#                |           v    |
+#                +---------> lgtm <---+
+#                       (OTLP gRPC :4317)
+
+services:
+  eggs:
+    build: ./eggs
+    container_name: eggs
+    environment:
+      SERVICE_NAME: eggs
+      OTEL_SERVICE_NAME: eggs
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=eggs,service.version=0.3.0"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://lgtm:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_METRIC_EXPORT_INTERVAL: "5000"
+      # ⭐ AULA 3: traces agora vão para o Tempo (era 'none' na aula 2).
+      OTEL_TRACES_EXPORTER: otlp
+      # ⭐ AULA 3: lote pequeno para demo — em produção use os defaults.
+      OTEL_BSP_SCHEDULE_DELAY: "1000"
+      OTEL_LOGS_EXPORTER: none
+      OTEL_METRICS_EXPORTER: otlp
+    ports:
+      - "8001:8000"
+    depends_on:
+      lgtm:
+        condition: service_healthy
+
+  spam:
+    build: ./spam
+    container_name: spam
+    environment:
+      SERVICE_NAME: spam
+      EGGS_URL: http://eggs:8000
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://lgtm:4317"
+      OTEL_METRIC_EXPORT_INTERVAL: "5000"
+      OTEL_BSP_SCHEDULE_DELAY: "1000"
+      # SPAM_TRACE_TO_CONSOLE: "true"   # descomente para ver spans no log
+    depends_on:
+      eggs:
+        condition: service_started
+      lgtm:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - spam
+
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: lgtm
+    ports:
+      - "3000:3000"   # Grafana UI
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    healthcheck:
+      # /tmp/ready é criado pelo próprio LGTM quando todos os
+      # componentes internos estão prontos. Mais confiável que
+      # depender de wget/curl (não estão instalados na imagem).
+      test: ["CMD", "test", "-f", "/tmp/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s

@@ -1,0 +1,16 @@
+# --- aplicação ---
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+httpx==0.28.1
+
+# --- OpenTelemetry: metrics (aula 2) ---
+opentelemetry-api==1.29.0
+opentelemetry-sdk==1.29.0
+opentelemetry-exporter-otlp-proto-grpc==1.29.0
+
+# --- OpenTelemetry: tracing (aula 3) ---
+# A API/SDK do tracing já vem no pacote 'opentelemetry-sdk' acima;
+# precisamos só do instrumentation do httpx para a propagação de
+# contexto automática nas chamadas saintes do spam para o eggs.
+opentelemetry-instrumentation-httpx==0.50b0
