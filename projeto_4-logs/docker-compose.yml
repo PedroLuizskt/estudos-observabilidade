@@ -1,0 +1,88 @@
+# docker-compose da aula 4.
+#
+# Mesma topologia desde a aula 2. O que muda na aula 4 são as
+# variáveis OTEL_LOGS_* — agora o terceiro pilar (logs) também
+# flui para o LGTM, especificamente para o Loki.
+#
+# Diff em relação à aula 3:
+#   1. eggs:  OTEL_LOGS_EXPORTER mudou de 'none' para 'otlp'
+#   2. eggs:  OTEL_PYTHON_LOG_CORRELATION=true — injeta trace_id e
+#             span_id no log record (correlação trace ↔ log)
+#   3. spam:  setup manual em logging_otel.py (sem env vars necessárias)
+#
+# Arquitetura (inalterada desde a aula 2):
+#
+#   cliente -> nginx -> spam -> eggs
+#                ^         \      ^
+#                |          \     |
+#                |           v    |
+#                +---------> lgtm <---+
+#                       (OTLP gRPC :4317)
+
+services:
+  eggs:
+    build: ./eggs
+    container_name: eggs
+    environment:
+      SERVICE_NAME: eggs
+      OTEL_SERVICE_NAME: eggs
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=eggs,service.version=0.4.0"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://lgtm:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_METRIC_EXPORT_INTERVAL: "5000"
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_BSP_SCHEDULE_DELAY: "1000"
+      # ⭐ AULA 4: logs agora vão para o Loki (era 'none' antes).
+      OTEL_LOGS_EXPORTER: otlp
+      # ⭐ AULA 4: ativa injeção de trace_id/span_id nos LogRecords.
+      OTEL_PYTHON_LOG_CORRELATION: "true"
+      # Garante que o nível mínimo capturado seja INFO (default é WARNING).
+      OTEL_PYTHON_LOG_LEVEL: info
+      OTEL_METRICS_EXPORTER: otlp
+    ports:
+      - "8001:8000"
+    depends_on:
+      lgtm:
+        condition: service_healthy
+
+  spam:
+    build: ./spam
+    container_name: spam
+    environment:
+      SERVICE_NAME: spam
+      EGGS_URL: http://eggs:8000
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://lgtm:4317"
+      OTEL_METRIC_EXPORT_INTERVAL: "5000"
+      OTEL_BSP_SCHEDULE_DELAY: "1000"
+      SPAM_LOG_LEVEL: INFO
+    depends_on:
+      eggs:
+        condition: service_started
+      lgtm:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - spam
+
+  lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: lgtm
+    ports:
+      - "3000:3000"   # Grafana UI
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s

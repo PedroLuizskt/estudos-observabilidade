@@ -1,0 +1,18 @@
+# --- aplicação ---
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+httpx==0.28.1
+
+# --- OpenTelemetry: API/SDK ---
+# O SDK 'opentelemetry-sdk' já inclui os módulos de logs (sdk._logs).
+opentelemetry-api==1.29.0
+opentelemetry-sdk==1.29.0
+
+# --- Exporters OTLP gRPC ---
+# Note que existe um exporter específico por sinal. Listamos todos
+# para deixar explícito (também viriam transitivamente).
+opentelemetry-exporter-otlp-proto-grpc==1.29.0
+
+# --- Instrumentações automáticas usadas pelo spam ---
+opentelemetry-instrumentation-httpx==0.50b0

@@ -1,0 +1,25 @@
+# Dependências para rodar tudo localmente na .obsvenv (sem Docker).
+# Cada serviço tem seu próprio requirements.txt isolado dentro da pasta.
+
+# --- aplicação ---
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+httpx==0.28.1
+
+# --- OpenTelemetry: API/SDK + exporter OTLP gRPC ---
+opentelemetry-api==1.29.0
+opentelemetry-sdk==1.29.0
+opentelemetry-exporter-otlp-proto-grpc==1.29.0
+
+# --- OpenTelemetry: distro + exporter combo ---
+opentelemetry-distro==0.50b0
+opentelemetry-exporter-otlp==1.29.0
+
+# --- Instrumentations ---
+opentelemetry-instrumentation-fastapi==0.50b0
+opentelemetry-instrumentation-asgi==0.50b0
+opentelemetry-instrumentation-system-metrics==0.50b0
+opentelemetry-instrumentation-httpx==0.50b0
+# ⭐ Aula 4: bridge entre logging stdlib e o OTel.
+opentelemetry-instrumentation-logging==0.50b0

@@ -1,0 +1,20 @@
+# --- aplicação ---
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+
+# --- OpenTelemetry: distro + auto-instrumentação ---
+opentelemetry-distro==0.50b0
+opentelemetry-exporter-otlp==1.29.0
+
+# --- Instrumentations específicas ---
+opentelemetry-instrumentation-fastapi==0.50b0
+opentelemetry-instrumentation-asgi==0.50b0
+opentelemetry-instrumentation-system-metrics==0.50b0
+# ⭐ Aula 4: ponte automática entre o logging stdlib e o OTel.
+# Faz duas coisas:
+#   1. anexa um LoggingHandler do OTel ao logger raiz, transformando
+#      todo log emitido pela aplicação em um LogRecord OTLP.
+#   2. injeta trace_id e span_id em cada record quando o log é
+#      emitido dentro de um span ativo (correlação automática).
+opentelemetry-instrumentation-logging==0.50b0
